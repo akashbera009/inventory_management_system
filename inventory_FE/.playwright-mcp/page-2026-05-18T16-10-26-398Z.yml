@@ -1,0 +1,18 @@
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - generic [ref=e6]: Welcome Back
+    - generic [ref=e7]: Login to manage your inventory
+  - generic [ref=e9]:
+    - generic [ref=e10]:
+      - generic [ref=e11]: Username
+      - textbox "Username" [ref=e12]:
+        - /placeholder: Enter your username
+    - generic [ref=e13]:
+      - generic [ref=e14]: Password
+      - textbox "Password" [ref=e15]:
+        - /placeholder: Enter your password
+    - button "Login" [ref=e16] [cursor=pointer]
+  - paragraph [ref=e18]:
+    - text: Don't have an account?
+    - link "Register" [ref=e19] [cursor=pointer]:
+      - /url: /register
