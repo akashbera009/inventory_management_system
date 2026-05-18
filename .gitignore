@@ -1,0 +1,136 @@
+# ==============================================================================
+#                      ROOT GITIGNORE - MULTI-STACK MONOREPO
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Operating System Files
+# ------------------------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------------------------
+# 2. Editors and IDEs
+# ------------------------------------------------------------------------------
+.idea/
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+.history/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swo
+
+# ------------------------------------------------------------------------------
+# 3. Environment Secrets (CRITICAL SECURITY)
+# ------------------------------------------------------------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+
+# ------------------------------------------------------------------------------
+# 4. Node.js & React Frontend (inventory_FE)
+# ------------------------------------------------------------------------------
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/*.local
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+**/lerna-debug.log*
+**/.playwright-mcp/
+**/.claude/
+**/.mcp.json
+
+# ------------------------------------------------------------------------------
+# 5. Python & Django Backend (Inventory_management_backend)
+# ------------------------------------------------------------------------------
+# Byte-compiled / optimized / DLL files
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+
+# C extensions
+**/*.so
+
+# Distribution / packaging
+**/.Python
+**/build/
+**/develop-eggs/
+**/downloads/
+**/eggs/
+**/.eggs/
+**/lib/
+**/lib64/
+**/parts/
+**/sdist/
+**/var/
+**/wheels/
+**/share/python-wheels/
+**/*.egg-info/
+**/.installed.cfg
+**/*.egg
+**/MANIFEST
+
+# Virtual Environments
+**/venv/
+**/.venv/
+**/env/
+**/ENV/
+**/env.bak/
+**/venv.bak/
+
+# Django files
+**/*.log
+**/local_settings.py
+**/db.sqlite3
+**/db.sqlite3-journal
+**/media/
+**/staticfiles/
+
+# Testing & Coverage
+**/htmlcov/
+**/.tox/
+**/.nox/
+**/.coverage
+**/.coverage.*
+**/.cache
+**/nosetests.xml
+**/coverage.xml
+**/*.cover
+**/*.py,cover
+**/.hypothesis/
+**/.pytest_cache/
+**/cover/
+
+# Other Python tools
+**/docs/_build/
+**/.pybuilder/
+**/target/
+**/.ipynb_checkpoints
+**/profile_default/
+**/ipython_config.py
+**/.mypy_cache/
+**/.dmypy.json
+**/dmypy.json
+**/.pyre/
+**/.pytype/
+**/cython_debug/
