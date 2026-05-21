@@ -48,7 +48,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         )
 
     # LIST
-    @method_decorator(cache_page(60 * 2))  # Cache for 2 minutes
     def list(self, request, *args, **kwargs):
         print("VIEW EXECUTED [ not serving from redis cache ]")
         queryset = self.filter_queryset(self.get_queryset())

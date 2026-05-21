@@ -59,7 +59,7 @@ const MENU_ITEMS = [
     label: 'Notifications',
     icon: Bell,
     path: '/notifications',
-    roles: ['ADMIN', 'MANAGER', 'STAFF']
+    roles: ['STAFF']
   },
   {
     id: 'audit-logs',

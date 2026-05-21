@@ -15,11 +15,12 @@ export function OrderList() {
   const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [status, setStatus] = useState('');
+  const [filterStatus, setFilterStatus] = useState(''); // Holds status filter for the table list
+  const [editStatus, setEditStatus] = useState('');     // Holds selected status inside the update modal
 
   const { data, isLoading } = useQuery({
-    queryKey: ['orders', { page, search, status }],
-    queryFn: () => orderService.getOrders({ page, search, status }),
+    queryKey: ['orders', { page, search, status: filterStatus }],
+    queryFn: () => orderService.getOrders({ page, search, status: filterStatus }),
   });
 
   const createMutation = useMutation({
@@ -35,6 +36,7 @@ export function OrderList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       setSelectedOrder(null);
+      setEditStatus('');
     },
   });
 
@@ -73,7 +75,7 @@ export function OrderList() {
           <Button variant="ghost" size="sm"
             onClick={() => {
               setSelectedOrder(o);
-              setStatus(o.status || '');
+              setEditStatus(o.status || '');
             }}>
             <Edit2 size={14} />
           </Button>
@@ -154,7 +156,7 @@ export function OrderList() {
         onOpenChange={(open) => {
           if (!open) {
             setSelectedOrder(null);
-            setStatus('');
+            setEditStatus('');
           }
         }}
       >
@@ -170,8 +172,8 @@ export function OrderList() {
               <Label>Order Status</Label>
               <select
                 className="w-full p-2 rounded-md border border-border bg-background text-sm"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
+                value={editStatus}
+                onChange={(e) => setEditStatus(e.target.value)}
               >
                 <option value="">Select Status</option>
 
@@ -187,16 +189,16 @@ export function OrderList() {
             <Button
               className="w-full"
               onClick={() => {
-                if (!selectedOrder || !status) return;
+                if (!selectedOrder || !editStatus) return;
 
                 updateMutation.mutate({
                   id: selectedOrder.id,
                   data: {
-                    status,
+                    status: editStatus,
                   },
                 });
               }}
-              disabled={updateMutation.isPending || !status}
+              disabled={updateMutation.isPending || !editStatus}
             >
               {updateMutation.isPending ? 'Updating...' : 'Update Status'}
             </Button>

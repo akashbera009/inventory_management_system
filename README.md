@@ -21,26 +21,9 @@ This system is designed with strict **Role-Based Access Control (RBAC)**, optimi
 
 The following diagram illustrates how the system components communicate:
 
-```mermaid
-graph TD
-    User([👤 End User / Operator]) <-->|Interacts| FE[🎨 React Frontend: Vite + TS]
-    FE <-->|Secure REST API Calls| BE[⚙️ Django REST Framework Backend]
-    BE <-->|Read / Write State| DB[(🐘 PostgreSQL Database)]
-    BE <-->|Cache / Rate-Limit| Cache[(⚡ Redis Cache)]
-    BE <-->|Upload / Retrieve Media| S3[☁️ AWS S3 Bucket]
-    
-    subgraph Frontend [Vite & React 19 App]
-        FE
-        State[Zustand Store] <--> FE
-        Query[React Query] <--> FE
-    end
-    
-    subgraph Backend [Django Core App]
-        BE
-        Auth[RBAC & JWT Auth] <--> BE
-        Audit[Audit Logs] <--> BE
-    end
-```
+<p align="center">
+  <img src="./django_react_architecture_v2.svg" alt="Project Structure" width="700"/>
+</p>
 
 ---
 

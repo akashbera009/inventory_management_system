@@ -9,7 +9,8 @@ import { Warehouse } from '@/types';
 
 const warehouseSchema = z.object({
   name: z.string().min(1, 'Warehouse name is required'),
-  location: z.string().min(1, 'Location is required'),
+  city: z.string().min(1, 'city is required'),
+  state: z.string().min(1, 'State is required'),
   capacity: z.number().min(1, 'Capacity must be at least 1'),
 });
 
@@ -30,11 +31,13 @@ export function WarehouseForm({ initialData, onSubmit, isLoading }: WarehouseFor
     resolver: zodResolver(warehouseSchema),
     defaultValues: initialData ? {
       name: initialData.name,
-      location: initialData.location,
+      city: initialData.city,
+      state: initialData.state,
       capacity: initialData.capacity,
     } : {
       name: '',
-      location: '',
+      city: '',
+      state: '',
       capacity: 0,
     },
   });
@@ -47,10 +50,16 @@ export function WarehouseForm({ initialData, onSubmit, isLoading }: WarehouseFor
         {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="location">Location</Label>
-        <Input id="location" placeholder="New York, NY" {...register('location')} />
-        {errors.location && <p className="text-sm text-destructive">{errors.location.message}</p>}
+        <Label htmlFor="location">City</Label>
+        <Input id="city" placeholder="New York, NY" {...register('city')} />
+        {errors.city && <p className="text-sm text-destructive">{errors.city.message}</p>}
       </div>
+      <div className="space-y-2">
+        <Label htmlFor="location">State</Label>
+        <Input id="state" placeholder="New York, NY" {...register('state')} />
+        {errors.state && <p className="text-sm text-destructive">{errors.state.message}</p>}
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="capacity">Capacity (Units)</Label>
         <Input id="capacity" type="number" {...register('capacity', { valueAsNumber: true })} />

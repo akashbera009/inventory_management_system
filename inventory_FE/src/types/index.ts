@@ -22,7 +22,8 @@ export interface Product {
 export interface Warehouse {
   id: string;
   name: string;
-  location: string;
+  city: string;
+  state: string;
   capacity: number;
 }
 

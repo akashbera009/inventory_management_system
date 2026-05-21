@@ -14,20 +14,16 @@ export function AuditLogList() {
     queryFn: () => auditLogService.getAuditLogs({ page, search }),
   });
 
-  const logs = data?.data?.results || [];
-  const totalItems = data?.data?.count || 0;
-  const totalPages = data?.data ? Math.ceil(totalItems / 10) : 0;
+  const logs = data?.data || [];
+  const totalItems = data?.total_count || 0;
+  const totalPages = data?.total_pages;
 
   const columns = [
-    { header: 'User', accessor: (log: AuditLog) => log.user.username },
-    { header: 'Action', accessor: (log: AuditLog) => (
-      <span className="px-2 py-1 rounded-md bg-muted text-xs font-medium">
-        {log.action}
-      </span>
-    )},
-    { header: 'Entity', accessor: (log: AuditLog) => log.entity },
-    { header: 'Timestamp', accessor: (log: AuditLog) => new Date(log.timestamp).toLocaleString() },
-    { header: 'Details', accessor: (log: AuditLog) => log.details },
+    { header: 'ID', accessor: (log: AuditLog) => log.id },
+    { header: 'Order ID', accessor: (log: AuditLog) => log.order },
+    { header: 'Old Status', accessor: (log: AuditLog) => log.old_status },
+    { header: 'New Status', accessor: (log: AuditLog) => log.new_status },
+    { header: 'Timestamp', accessor: (log: AuditLog) => new Date(log.changed_at).toLocaleString() },
   ];
 
   return (

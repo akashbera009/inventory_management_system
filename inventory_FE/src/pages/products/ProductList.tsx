@@ -19,7 +19,6 @@ export function ProductList() {
     queryKey: ['products', { page, search }],
     queryFn: () => productService.getProducts({ page, search }),
   });
-  console.log('data', data)
   const createMutation = useMutation({
     mutationFn: productService.createProduct,
     onSuccess: () => {
