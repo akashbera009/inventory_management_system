@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, PackageCheck } from 'lucide-react';
+import { Plus, Edit2, Trash2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/tables/DataTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -8,6 +8,26 @@ import { orderService } from '@/features/orders/services/orderService';
 import { Order } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+
+/** Extract a human-readable message from a DRF error response */
+function extractErrorMessage(error: unknown): string {
+  const data = (error as any)?.response?.data;
+  if (!data) return 'Something went wrong. Please try again.';
+  // Field-level: { status: ["msg"] }
+  if (typeof data === 'object') {
+    for (const key of ['detail', 'message', 'non_field_errors', 'status']) {
+      const val = data[key];
+      if (Array.isArray(val) && val.length) return val[0];
+      if (typeof val === 'string') return val;
+    }
+    // Fallback: first value of any field
+    const firstVal = Object.values(data)[0];
+    if (Array.isArray(firstVal) && firstVal.length) return String(firstVal[0]);
+    if (typeof firstVal === 'string') return firstVal;
+  }
+  return String(data);
+}
 
 export function OrderList() {
   const queryClient = useQueryClient();
@@ -17,6 +37,7 @@ export function OrderList() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState(''); // Holds status filter for the table list
   const [editStatus, setEditStatus] = useState('');     // Holds selected status inside the update modal
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['orders', { page, search, status: filterStatus }],
@@ -37,6 +58,10 @@ export function OrderList() {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       setSelectedOrder(null);
       setEditStatus('');
+      setUpdateError(null);
+    },
+    onError: (error) => {
+      setUpdateError(extractErrorMessage(error));
     },
   });
 
@@ -58,15 +83,7 @@ export function OrderList() {
     { header: 'Total', accessor: (o: Order) => `$${Number(o.total_price).toFixed(2)}` },
     {
       header: 'Status',
-      accessor: (o: Order) => (
-        <span className={cn(
-          "px-2 py-1 rounded-full text-xs font-medium",
-          o.status === 'confirmed' || o.status === 'completed' ? "bg-emerald-100 text-emerald-700" :
-            o.status === 'cancelled' ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
-        )}>
-          {o.status}
-        </span>
-      )
+      accessor: (o: Order) => <StatusBadge status={o.status} />,
     },
     {
       header: 'Actions',
@@ -95,10 +112,6 @@ export function OrderList() {
       ),
     },
   ];
-
-  function cn(...inputs: any[]) {
-    return inputs.filter(Boolean).join(' ');
-  }
 
   return (
     <div className="space-y-6">
@@ -157,6 +170,7 @@ export function OrderList() {
           if (!open) {
             setSelectedOrder(null);
             setEditStatus('');
+            setUpdateError(null);
           }
         }}
       >
@@ -173,7 +187,7 @@ export function OrderList() {
               <select
                 className="w-full p-2 rounded-md border border-border bg-background text-sm"
                 value={editStatus}
-                onChange={(e) => setEditStatus(e.target.value)}
+                onChange={(e) => { setEditStatus(e.target.value); setUpdateError(null); }}
               >
                 <option value="">Select Status</option>
 
@@ -186,16 +200,20 @@ export function OrderList() {
                 <option value="completed">Completed</option>
               </select>
             </div>
+            {updateError && (
+              <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+                <AlertCircle size={15} className="mt-0.5 shrink-0" />
+                <span>{updateError}</span>
+              </div>
+            )}
+
             <Button
               className="w-full"
               onClick={() => {
                 if (!selectedOrder || !editStatus) return;
-
                 updateMutation.mutate({
                   id: selectedOrder.id,
-                  data: {
-                    status: editStatus,
-                  },
+                  data: { status: editStatus },
                 });
               }}
               disabled={updateMutation.isPending || !editStatus}

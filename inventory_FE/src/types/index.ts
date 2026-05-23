@@ -14,9 +14,12 @@ export interface Product {
   sku: string;
   price: number;
   weight: number;
+  category?: string;
   is_active: boolean;
-  createdAt: string;
-  updatedAt: string;
+  created_at?: string;
+  updated_at?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Warehouse {
@@ -25,27 +28,42 @@ export interface Warehouse {
   city: string;
   state: string;
   capacity: number;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+  is_active?: boolean;
 }
 
 export interface InventoryItem {
   id: string;
-  product: Product;
-  warehouse: Warehouse;
-  quantity: number;
-  lowStockThreshold: number;
-  lastUpdated: string;
+  product: string | Product;
+  warehouse: string | Warehouse;
+  product_details?: Product;
+  warehouse_details?: Warehouse;
+  quantity_available: number;
+  reserved_quantity: number;
+  updated_at?: string;
+  // legacy aliases kept for compatibility
+  quantity?: number;
+  lowStockThreshold?: number;
+  lastUpdated?: string;
 }
 
-export type OrderStatus = 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+export type OrderStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
 
 export interface Order {
   id: string;
-  customerName: string;
-  items: OrderItem[];
-  totalAmount: number;
-  status: OrderStatus;
-  createdAt: string;
-  updatedAt: string;
+  order_number?: string;
+  user?: string;
+  items?: OrderItem[];
+  total_price?: number;
+  status: string;
+  created_at?: string;
+  updated_at?: string;
+  // legacy
+  customerName?: string;
+  totalAmount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface OrderItem {
@@ -65,23 +83,33 @@ export interface Notification {
 
 export interface AuditLog {
   id: string;
-  user: User;
-  action: string;
-  entity: string;
-  entityId: string;
-  timestamp: string;
-  details: string;
+  order: string | number;
+  old_status: string;
+  new_status: string;
+  changed_at: string;
+  // legacy fields
+  user?: User;
+  action?: string;
+  entity?: string;
+  entityId?: string;
+  timestamp?: string;
+  details?: string;
 }
 
 export interface ApiResponse<T> {
   data: T;
   message?: string;
-  status: number;
+  status?: number;
+  token?: string;
+  role?: string;
 }
 
+/** Matches the backend LargeResultsSetPagination response shape */
 export interface PaginatedResponse<T> {
-  results: T[];
-  count: number;
-  next: string | null;
-  previous: string | null;
+  data: T[];
+  total_items?: number;
+  total_count?: number;
+  total_pages?: number;
+  page_size?: number;
+  message?: string;
 }

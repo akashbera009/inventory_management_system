@@ -1,28 +1,28 @@
 # 📦 Enterprise Inventory Management System (EIMS)
 
-A complete, production-ready, full-stack Inventory Management System featuring a high-performance **Django REST Framework (DRF) backend** and a modern, interactive **React + TypeScript + Vite + TailwindCSS frontend**.
+A complete, production-ready full-stack Inventory Management System featuring a high-performance **Django REST Framework backend** and a modern **React + TypeScript + Vite + TailwindCSS frontend**.
 
-This system is designed with strict **Role-Based Access Control (RBAC)**, optimized queries, custom caching/rate-limiting via **Redis**, cloud media storage via **AWS S3**, and detailed system auditing.
-
----
-
-## 🌟 Key Highlights
-
-- 👥 **Advanced RBAC:** Three distinct user roles (`ADMIN`, `MANAGER`, `STAFF`) with granular permissions.
-- ⚡ **High-Performance Backend:** Caching, session management, and rate-limiting using **Redis**.
-- 📊 **Dynamic Analytics Dashboard:** Built with **React 19**, **Zustand** state management, and interactive charts via **Recharts**.
-- ☁️ **Cloud Storage Integration:** Automated media and static asset management using **AWS S3**.
-- 📝 **Audit Logging & Notifications:** System-wide tracking of resource modifications and immediate operator alerts.
-- 🎯 **Robust Security:** Pre-configured CORS, custom authentication middleware, and input validation via **Zod**.
+Designed with strict **Role-Based Access Control (RBAC)**, optimized ORM queries, Redis caching/rate-limiting, AWS S3 cloud storage, Celery async task processing, and detailed system auditing.
 
 ---
 
-## 🏗️ System Architecture
+## 🌟 Key Features
 
-The following diagram illustrates how the system components communicate:
+- **Advanced RBAC** — Three roles (`ADMIN`, `MANAGER`, `STAFF`) with granular per-endpoint permissions.
+- **Async Task Processing** — Celery + Redis for background jobs: bulk CSV imports and scheduled low-stock alerts.
+- **Interactive Analytics Dashboard** — Aggregated stats endpoint (no pagination limitation), Recharts bar chart for order status distribution, real-time revenue and low-stock summaries.
+- **Warehouse Map** — Dark-themed interactive map (react-leaflet + CartoDB Dark Matter tiles) with per-warehouse markers and lat/lng editing.
+- **Product Catalog** — Category classification (10 categories), filter/sort toolbar, CSV bulk import with live progress polling, per-row view dialog.
+- **Profile Management** — Clickable avatar opens a profile modal with read/edit mode for personal details.
+- **Audit Logging & Notifications** — System-wide activity trail with color-coded status badges; automated low-stock notifications via Celery Beat.
+- **Cloud Storage** — AWS S3 for media/static in production (`USE_S3=True`); local filesystem in development.
+
+---
+
+## 🏗️ Architecture
 
 <p align="center">
-  <img src="./django_react_architecture_v2.svg" alt="Project Structure" width="700"/>
+  <img src="./django_react_architecture_v2.svg" alt="System Architecture" width="700"/>
 </p>
 
 ---
@@ -31,206 +31,324 @@ The following diagram illustrates how the system components communicate:
 
 ```
 inventory_management_System/
-├── Inventory_management_backend/  # 🐍 DRF Python Backend
-│   ├── core/                      # Global project configurations
-│   ├── base/                      # Common database models & helpers
-│   ├── accounts/                  # Authentication, roles, & registration
-│   ├── products/                  # Catalog, category, and pricing management
-│   ├── warehouses/                # Warehouse sites & tracking
-│   ├── inventory/                 # Stock movement and adjustments
-│   ├── orders/                    # Order processing & inventory reconciliation
-│   ├── notifications/             # Immediate alerts/messages
-│   ├── audit_logs/                # Admin logging of activity
-│   ├── docs/                      # Postman collections
-│   ├── static/                    # Local static assets
-│   ├── requirements.txt           # Python dependency checklist
-│   └── manage.py                  # Django utility entry point
+├── Inventory_management_backend/   # Django 5.2 REST API
+│   ├── core/           # Settings, URL routing, Celery app
+│   ├── base/           # Shared mixins, permissions, pagination, dashboard stats
+│   ├── accounts/       # Custom User model, auth, profile
+│   ├── products/       # Product catalog, categories, CSV import jobs & tasks
+│   ├── warehouses/     # Warehouse CRUD, lat/lng location fields
+│   ├── inventory/      # Stock records, adjustment, low-stock Celery task
+│   ├── orders/         # Order lifecycle, inventory reconciliation
+│   ├── notifications/  # Per-user alerts
+│   ├── audit_logs/     # Immutable activity trail
+│   ├── docs/           # Postman collection
+│   └── requirements.txt
 │
-├── inventory_FE/                  # ⚛️ Vite + React + TypeScript Frontend
-│   ├── src/                       # Application source code (components, pages, stores)
-│   ├── public/                    # Static assets
-│   ├── package.json               # Frontend dependencies & script entrypoints
-│   ├── tailwind.config.js         # Styling layout utilities
-│   └── vite.config.ts             # Vite build orchestration
-│
-├── .gitignore                     # Unified, multi-stack Git exclusion list
-└── README.md                      # Unified project orchestration guide (This file)
+└── inventory_FE/                   # React 19 + Vite frontend
+    └── src/
+        ├── api/            # Axios client (Token auth interceptor)
+        ├── features/       # Domain modules: auth, products, orders, inventory,
+        │                   #   warehouses, notifications, auditLogs, dashboard
+        ├── pages/          # Route-level page components
+        ├── components/     # Shared UI: DataTable, StatCard, StatusBadge, etc.
+        ├── store/          # Zustand stores (authStore, themeStore)
+        ├── layouts/        # DashboardLayout (sidebar, header, profile modal)
+        └── providers/      # QueryProvider (TanStack React Query v5)
 ```
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer | Technologies Used | Key Purpose |
-| :--- | :--- | :--- |
-| **Frontend Core** | React 19, TypeScript, Vite | Scalable, type-safe, hot-reloading web shell |
-| **State & Fetching** | Zustand, TanStack React Query v5 | Highly optimized cache and local app state management |
-| **Styling & UI** | TailwindCSS, Framer Motion, Lucide | Premium, animated, and responsive user experience |
-| **Visual Analytics**| Recharts | Dynamic dashboards with interactive graphs |
-| **Backend Core** | Django 5.2, Django REST Framework | Robust RESTful business logic and endpoint control |
-| **Database** | PostgreSQL | Transactional, relations-focused database |
-| **Cache & Speed** | Redis | Caching, session management, and rate-limiting |
-| **File Storage** | AWS S3 / Boto3 | High-availability asset storage for product media |
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Frontend** | React 19, TypeScript, Vite | Type-safe SPA with hot reload |
+| **State** | Zustand + TanStack React Query v5 | Client state (auth/theme) + server cache |
+| **Styling** | TailwindCSS, shadcn/ui, Framer Motion | Responsive UI with animations |
+| **Charts** | Recharts | Order status bar chart |
+| **Map** | react-leaflet + CartoDB Dark Matter | Warehouse location visualization |
+| **Forms** | React Hook Form + Zod | Validated forms throughout |
+| **Backend** | Django 5.2, DRF | REST API, RBAC, ORM |
+| **Database** | PostgreSQL | Primary data store |
+| **Cache/Queue** | Redis | Caching, sessions, Celery broker |
+| **Async Tasks** | Celery 5.4 + django-celery-beat | Background jobs, scheduled tasks |
+| **Task Results** | django-celery-results | Task result storage in PostgreSQL |
+| **Storage** | AWS S3 / Boto3 | Production media & static files |
 
 ---
 
 ## 🚀 Installation & Setup
 
-### ⚙️ Prerequisites
-Ensure the following tools are installed and running locally:
-- **Node.js** (v18+) & **NPM**
-- **Python** (v3.11+)
-- **PostgreSQL** (v14+)
-- **Redis Server**
+### Prerequisites
+
+- Python 3.11+, Node.js 18+, npm
+- PostgreSQL 14+
+- Redis (broker for Celery and Django caching)
 
 ---
 
-### 1. 🐍 Backend Setup (Django)
+### 1. Backend Setup
 
-1. Navigate to the backend directory:
-   ```bash
-   cd Inventory_management_backend
-   ```
-2. Create and activate a virtual environment:
-   ```bash
-   # Create virtual environment
-   python -m venv venv
-   
-   # Activate (macOS/Linux)
-   source venv/bin/activate
-   
-   # Activate (Windows)
-   venv\Scripts\activate
-   ```
-3. Install the dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Setup PostgreSQL database:
-   Run the PostgreSQL shell or PGAdmin and create the database:
-   ```sql
-   CREATE DATABASE inventory_management_db;
-   ```
-5. Configure environment secrets:
-   Copy the example template and update the variables:
-   ```bash
-   cp .env.example .env
-   ```
-   *Edit `.env` and fill in your DB credentials, Redis endpoints, and AWS credentials if using S3.*
+```bash
+cd Inventory_management_backend
 
-6. Execute database migrations & create administrator account:
-   ```bash
-   python manage.py migrate
-   python manage.py createsuperuser
-   ```
-7. Fire up the backend server:
-   ```bash
-   python manage.py runserver
-   ```
-   *The backend will be live at `http://127.0.0.1:8000/`.*
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate          # macOS/Linux
+# venv\Scripts\activate           # Windows
 
----
+pip install -r requirements.txt
+```
 
-### 2. ⚛️ Frontend Setup (React + Vite)
+Create the PostgreSQL database:
 
-1. Open a new terminal and navigate to the frontend directory:
-   ```bash
-   cd inventory_FE
-   ```
-2. Install npm packages:
-   ```bash
-   npm install
-   ```
-3. Establish your environment variables:
-   Create a `.env` file inside the `inventory_FE/` directory:
-   ```env
-   VITE_API_URL=http://127.0.0.1:8000/api
-   ```
-4. Start the frontend developer server:
-   ```bash
-   npm run dev
-   ```
-   *The frontend dashboard will be live at `http://localhost:5173/`.*
+```sql
+CREATE DATABASE inventory_management_db;
+```
 
----
+Configure environment variables:
 
-## 👥 Role-Based Access Control (RBAC)
+```bash
+cp .env.example .env
+```
 
-The platform is designed around strict, custom authorization models matching user roles to exact API endpoints:
+Key variables in `.env`:
 
-| Role | Hierarchy Level | System Access Profile |
-| :--- | :--- | :--- |
-| **`ADMIN`** | Tier 1 (Highest) | Absolute read/write privileges over all entities, users, warehouses, and settings. |
-| **`MANAGER`**| Tier 2 (Medium) | Operational management: configure products, warehouses, and adjust order statuses. |
-| **`STAFF`** | Tier 3 (Operator) | Day-to-day work: check catalogs, view/create their own orders, and review notifications. |
+```env
+SECRET_KEY=your-secure-secret-key
+DEBUG=True
+ALLOWED_HOST=127.0.0.1,localhost
 
-### 🔐 API Role Enforcement
+DATABASE_NAME=inventory_management_db
+DATABASE_USER=your_postgres_user
+DATABASE_PASSWORD=your_postgres_password
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
 
-- **`IsAdminUserRole`**: Limits access solely to authenticated administrators.
-- **`IsManagerOrAdmin`**: Restricts access to managers or administrators (e.g., product adjustments, log viewing).
-- **Products, Warehouses, & Inventory APIs**:
-  - `GET` (View-only): Allowed for all authenticated users.
-  - `POST/PUT/PATCH/DELETE` (Mutations): Allowed only for `IsManagerOrAdmin`.
-- **Orders API**:
-  - `GET` (List): Standard `STAFF` see **only their own** orders. `MANAGER` and `ADMIN` retrieve **all system orders** globally.
-  - `POST` (Creation): Open to all users to submit orders.
-- **Audit Logs API**:
-  - Accessible strictly via `IsManagerOrAdmin`.
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
 
-### 📝 Role Registration Payload
-When registering a new user, you can optionally supply a `role`. The backend includes case-insensitive normalization (e.g., `"Manager"` or `"manager"` automatically normalizes to `"MANAGER"`):
-```json
-{
-    "username": "manager1",
-    "email": "manager@example.com",
-    "name": "Akash Bera",
-    "role": "Manager",
-    "password": "test1234",
-    "confirm_password": "test1234"
+USE_S3=False
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_STORAGE_BUCKET_NAME=
+AWS_S3_REGION_NAME=
+```
+
+Apply migrations and create a superuser:
+
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+```
+
+(Optional) Seed product categories for existing products:
+
+```bash
+python manage.py seed_categories
+```
+
+Start the development server:
+
+```bash
+python manage.py runserver
 ```
 
 ---
 
-## 📡 API Overview & Routes
+### 2. Celery Workers (Async Tasks)
 
-Versioned endpoints under the `/api/` prefix:
+Open two additional terminals in `Inventory_management_backend/` with the venv activated:
 
-### 🔑 Authentication
-- `POST /api/accounts/v1/register/` - Create profile (supports dynamic role assignment)
-- `POST /api/accounts/v1/login/` - Login and fetch Auth token
-- `POST /api/accounts/v1/logout/` - Invalidate current session
+**Worker** (processes queued tasks — CSV imports, etc.):
 
-### 📦 Products
-- `GET /api/products/v1/products/` - Search and list products (paginated)
-- `POST /api/products/v1/products/` - Add product details (*Manager/Admin only*)
-- `PATCH /api/products/v1/products/{id}/` - Update specifications (*Manager/Admin only*)
+```bash
+celery -A core worker -l info
+```
 
-### 🛒 Orders & Logistics
-- `GET /api/orders/v1/orders/` - Retrieve orders (scoped list or absolute list depending on role)
-- `POST /api/orders/v1/orders/` - Order dispatch and stock calculation
-- `PATCH /api/orders/v1/orders/{id}/` - Modify order states (*Manager/Admin only*)
+**Beat scheduler** (triggers periodic tasks — hourly low-stock check):
 
-### 🔔 Operations Logging
-- `GET /api/notifications/v1/notifications/` - View direct user notifications
-- `GET /api/audit_logs/v1/auditlogs/` - Audit system-wide transactions (*Manager/Admin only*)
+```bash
+celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+```
+
+> Both require Redis to be running. The `django-celery-results` backend stores task results in PostgreSQL (no separate result store needed).
 
 ---
 
-## 🧪 API Verification using Postman
+### 3. Frontend Setup
 
-We have included a complete Postman collection to simplify validation of all backend routes.
+```bash
+cd inventory_FE
+npm install
+```
 
-1. Find the collection JSON file at:
-   `Inventory_management_backend/docs/inventory_management.postman_collection.json`
-2. Open Postman, click **Import**, and select this file.
-3. Use the pre-configured endpoints to test Registering, Logging in, and mutating data under different role credentials!
+Create `inventory_FE/.env`:
+
+```env
+VITE_API_BASE_URL=http://127.0.0.1:8000/api
+```
+
+Start the dev server:
+
+```bash
+npm run dev
+```
+
+Frontend runs at `http://localhost:5173`.
 
 ---
 
-## 🎨 Premium UI Components & Visual Polish
+## 👥 Role-Based Access Control
 
-The React frontend includes high-fidelity UI layouts:
-- **Glassmorphism Sidebar Navigation**: Fluid design utilizing Framer Motion transitions.
-- **Interactive Metrics Dashboard**: Recharts-based multi-axis line graphs and bar graphs for order statistics and stock capacities.
-- **Role-specific UI views**: Hide or disable control elements in real-time according to logged-in user credentials.
-- **Toast Notifications**: Interactive state alerts when inventory quantities change or actions succeed/fail.
+| Role | Level | Access |
+|---|---|---|
+| `ADMIN` | Tier 1 | Full read/write across all resources and users |
+| `MANAGER` | Tier 2 | Manage products, warehouses, inventory, order statuses |
+| `STAFF` | Tier 3 | View catalog, place and view own orders, view own notifications |
+
+### Endpoint Restrictions Summary
+
+- **Products / Warehouses / Inventory** — `GET`: all authenticated users. `POST/PATCH/DELETE`: Manager/Admin only.
+- **Orders** — `GET`: STAFF see own orders only; Manager/Admin see all. `POST`: all authenticated. `PATCH/DELETE`: Manager/Admin only.
+- **Audit Logs** — Manager/Admin only.
+- **Dashboard Stats** — All authenticated (STAFF get order counts scoped to their own orders; Manager/Admin get full aggregated stats).
+
+### Registration Payload
+
+```json
+{
+  "username": "manager1",
+  "email": "manager@example.com",
+  "name": "Akash Bera",
+  "role": "MANAGER",
+  "password": "test1234",
+  "confirm_password": "test1234"
+}
+```
+
+Role values are case-insensitive (`"manager"` normalizes to `"MANAGER"`).
+
+---
+
+## 📡 API Reference
+
+All endpoints are versioned under `/api/`.
+
+### Authentication
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/accounts/v1/register/` | Register new user |
+| POST | `/accounts/v1/login/` | Login, receive auth token |
+| POST | `/accounts/v1/logout/` | Invalidate token |
+| GET | `/accounts/v1/profile/` | Get current user profile |
+| PATCH | `/accounts/v1/profile/` | Update profile fields |
+
+### Products
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/products/v1/products/` | List products (search, filter by `is_active`/`category`, sort by `name`/`price`/`sku`) |
+| POST | `/products/v1/products/` | Create product *(Manager/Admin)* |
+| PATCH | `/products/v1/products/{id}/` | Update product *(Manager/Admin)* |
+| DELETE | `/products/v1/products/{id}/` | Delete product *(Manager/Admin)* |
+| POST | `/products/v1/products/import/` | Upload CSV for async bulk import *(Manager/Admin)* |
+| GET | `/products/v1/products/import/{job_id}/status/` | Poll CSV import job progress |
+
+### Warehouses
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/warehouses/v1/warehouses/` | List warehouses (includes `latitude`, `longitude`) |
+| POST | `/warehouses/v1/warehouses/` | Create warehouse *(Manager/Admin)* |
+| PATCH | `/warehouses/v1/warehouses/{id}/` | Update warehouse *(Manager/Admin)* |
+
+### Inventory
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/inventory/v1/inventory/` | List stock records (paginated) |
+| POST | `/inventory/v1/inventory/` | Add stock entry *(Manager/Admin)* |
+| PATCH | `/inventory/v1/inventory/{id}/` | Adjust `quantity_available` *(Manager/Admin)* |
+
+### Orders
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/orders/v1/orders/` | List orders (scoped by role) |
+| POST | `/orders/v1/orders/` | Place order (deducts inventory atomically) |
+| PATCH | `/orders/v1/orders/{id}/` | Update order status *(Manager/Admin)* |
+
+### Notifications & Audit Logs
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/notifications/v1/notifications/` | User notifications |
+| GET | `/audit_logs/v1/auditlogs/` | Audit trail *(Manager/Admin)* |
+
+### Dashboard
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/dashboard/v1/stats/` | Aggregated stats: active orders, revenue, low-stock count, warehouse count, order status breakdown |
+
+---
+
+## ⚙️ Async Tasks (Celery)
+
+### Low-Stock Alert (Scheduled)
+
+Runs every hour via Celery Beat. Queries all inventory records with `quantity_available ≤ 10` and creates a `Notification` for every `ADMIN`/`MANAGER` user. Deduplicates — skips items that already triggered a notification in the last 24 hours.
+
+### CSV Product Import (On-demand)
+
+Triggered via `POST /products/v1/products/import/`. The view saves the uploaded file to a temp path, creates a `CSVImportJob` record, then dispatches `import_products_from_csv.delay(job_id)`.
+
+The task:
+1. Parses CSV rows (`name`, `sku`, `price`, `weight`, `description` columns)
+2. Upserts products by SKU (creates or updates)
+3. Increments `CSVImportJob.processed_rows` after each row for live progress tracking
+4. Sets job status to `completed` or `failed` with per-row error details
+
+Frontend polls `/products/v1/products/import/{job_id}/status/` every 2 seconds and displays a progress bar until the job finishes.
+
+---
+
+## 🗺️ Warehouse Map
+
+Warehouses support optional `latitude` and `longitude` fields. When set, a marker appears on the dark-themed interactive map (CartoDB Dark Matter tile layer, no API key required) rendered above the warehouses table. The map auto-fits bounds to all markers.
+
+---
+
+## 🎨 Frontend Pages
+
+| Page | Features |
+|---|---|
+| **Dashboard** | Stat cards (active orders, revenue, low stock, warehouses), order status bar chart, recent notifications, low-stock items table — all from a single aggregated API call |
+| **Products** | Filter by status/category, sort by name/price/SKU, search with debounce, per-row view dialog, edit dialog, CSV import with progress |
+| **Warehouses** | Dark map with markers, coordinates column, create/edit with lat/lng inputs |
+| **Inventory** | Products-in-stock and active-warehouses summary cards, stock adjustment dialog |
+| **Orders** | Status filter, update status dialog with inline error display |
+| **Audit Logs** | Color-coded status pills (pending=yellow, confirmed=green, completed=blue, cancelled=red) |
+| **Profile** | Click avatar in header → modal with read/edit mode for name, date of birth, address |
+
+---
+
+## 🧪 API Testing
+
+A complete Postman collection is available at:
+
+```
+Inventory_management_backend/docs/inventory_management.postman_collection.json
+```
+
+Import it into Postman to test all endpoints with pre-configured requests grouped by resource.
+
+---
+
+## ☁️ AWS S3 (Production)
+
+Set `USE_S3=True` in `.env` and provide AWS credentials. Then run:
+
+```bash
+python manage.py collectstatic --noinput
+```
+
+Required IAM permissions on the bucket:
+- `s3:ListBucket`, `s3:GetBucketLocation` on the bucket ARN
+- `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject`, `s3:HeadObject` on `bucket/*`

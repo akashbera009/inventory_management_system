@@ -6,6 +6,7 @@ import { DataTable } from '@/components/tables/DataTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { warehouseService } from '@/features/warehouses/services/warehouseService';
 import { WarehouseForm } from '@/features/warehouses/components/WarehouseForm';
+import { WarehouseMap } from '@/features/warehouses/components/WarehouseMap';
 import { Warehouse } from '@/types';
 
 export function WarehouseList() {
@@ -27,7 +28,8 @@ export function WarehouseList() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => warehouseService.updateWarehouse(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      warehouseService.updateWarehouse(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['warehouses'] });
       setSelectedWarehouse(null);
@@ -41,17 +43,26 @@ export function WarehouseList() {
     },
   });
 
-  console.log('data', data);
-
-
   const warehouses = data?.data || [];
   const totalItems = data?.total_items || 0;
-  const totalPages = data?.total_pages || 0
-  const pageSize = data?.page_size || 0
+  const totalPages = data?.total_pages || 0;
+  const pageSize = data?.page_size || 0;
+
   const columns = [
     { header: 'Name', accessor: (w: Warehouse) => w.name },
-    { header: 'Location', accessor: (w: Warehouse) => `city: ${w.city}, state: ${w.state} ` },
+    { header: 'Location', accessor: (w: Warehouse) => `${w.city}, ${w.state}` },
     { header: 'Capacity', accessor: (w: Warehouse) => `${w.capacity} units` },
+    {
+      header: 'Coordinates',
+      accessor: (w: Warehouse) =>
+        w.latitude && w.longitude ? (
+          <span className="font-mono text-xs text-muted-foreground">
+            {Number(w.latitude).toFixed(4)}, {Number(w.longitude).toFixed(4)}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        ),
+    },
     {
       header: 'Actions',
       accessor: (w: Warehouse) => (
@@ -95,14 +106,17 @@ export function WarehouseList() {
               <DialogTitle>Add New Warehouse</DialogTitle>
             </DialogHeader>
             <WarehouseForm
-              onSubmit={async (data) => {
-                await createMutation.mutateAsync(data);
+              onSubmit={async (formData) => {
+                await createMutation.mutateAsync(formData);
               }}
               isLoading={createMutation.isPending}
             />
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Dark-themed map */}
+      <WarehouseMap warehouses={warehouses} />
 
       <DataTable
         data={warehouses}
@@ -122,8 +136,8 @@ export function WarehouseList() {
           {selectedWarehouse && (
             <WarehouseForm
               initialData={selectedWarehouse}
-              onSubmit={async (data) => {
-                await updateMutation.mutateAsync({ id: selectedWarehouse.id, data });
+              onSubmit={async (formData) => {
+                await updateMutation.mutateAsync({ id: selectedWarehouse.id, data: formData });
               }}
               isLoading={updateMutation.isPending}
             />

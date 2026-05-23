@@ -11,7 +11,7 @@ interface RoleRouteProps {
 export function RoleRoute({ children, allowedRoles }: RoleRouteProps) {
   const { user } = useAuthStore();
 
-  if (!user || !allowedRoles.includes(user.role)) {
+  if (!user || !allowedRoles.includes(user.role as UserRole)) {
     return <Navigate to="/" replace />;
   }
 

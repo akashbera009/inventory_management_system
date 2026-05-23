@@ -37,9 +37,9 @@ export function Login() {
       console.log(response);
 
       setAuth({
-        role: response.role,
+        role: response.role!,
         username: data.username,
-      }, response?.token);
+      }, response?.token!);
       navigate('/');
     } catch (error) {
       console.error('Login failed:', error);

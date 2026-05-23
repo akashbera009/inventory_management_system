@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FileText, Search } from 'lucide-react';
 import { DataTable } from '@/components/tables/DataTable';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { auditLogService } from '@/features/auditLogs/services/auditLogService';
 import { AuditLog } from '@/types';
 
@@ -21,9 +21,18 @@ export function AuditLogList() {
   const columns = [
     { header: 'ID', accessor: (log: AuditLog) => log.id },
     { header: 'Order ID', accessor: (log: AuditLog) => log.order },
-    { header: 'Old Status', accessor: (log: AuditLog) => log.old_status },
-    { header: 'New Status', accessor: (log: AuditLog) => log.new_status },
-    { header: 'Timestamp', accessor: (log: AuditLog) => new Date(log.changed_at).toLocaleString() },
+    {
+      header: 'Old Status',
+      accessor: (log: AuditLog) => <StatusBadge status={log.old_status} />,
+    },
+    {
+      header: 'New Status',
+      accessor: (log: AuditLog) => <StatusBadge status={log.new_status} />,
+    },
+    {
+      header: 'Timestamp',
+      accessor: (log: AuditLog) => new Date(log.changed_at).toLocaleString(),
+    },
   ];
 
   return (
@@ -39,7 +48,7 @@ export function AuditLogList() {
         data={logs}
         columns={columns}
         isLoading={isLoading}
-        onSearch={setSearch}
+        onSearch={(q) => { setSearch(q); setPage(1); }}
         onPageChange={setPage}
         currentPage={page}
         totalPages={totalPages}

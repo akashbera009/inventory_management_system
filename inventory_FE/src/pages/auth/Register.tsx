@@ -71,7 +71,7 @@ export function Register() {
       setAuth({
         role: data.role,
         username: data.username,
-      }, response.token);
+      }, response.token!);
 
       navigate('/');
     } catch (error) {
