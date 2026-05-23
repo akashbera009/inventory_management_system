@@ -9,6 +9,8 @@ class Warehouse(BaseModel):
     capacity = models.PositiveIntegerField(
         validators=[MinValueValidator(0)]
     )
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):

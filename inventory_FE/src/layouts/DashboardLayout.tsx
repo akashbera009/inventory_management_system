@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
 import { cn } from '@/lib/utils';
+import { ProfileModal } from '@/features/accounts/components/ProfileModal';
 
 const MENU_ITEMS = [
   {
@@ -72,6 +73,7 @@ const MENU_ITEMS = [
 
 export function DashboardLayout() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
@@ -170,9 +172,13 @@ export function DashboardLayout() {
               <UserIcon size={14} />
               <span>{user?.role}</span>
             </div>
-            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden border border-border">
+            <button
+              onClick={() => setIsProfileOpen(true)}
+              className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden border border-border hover:ring-2 hover:ring-primary transition-all"
+              title="View profile"
+            >
               <span className="text-xs font-bold">{user?.username?.charAt(0).toUpperCase()}</span>
-            </div>
+            </button>
           </div>
         </header>
 
@@ -187,6 +193,8 @@ export function DashboardLayout() {
           </motion.div>
         </main>
       </div>
+
+      <ProfileModal open={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </div>
   );
 }

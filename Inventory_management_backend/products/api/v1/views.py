@@ -1,12 +1,16 @@
+import os
+import tempfile
+
 from base.permissions import IsManagerOrAdmin
 from rest_framework import viewsets, filters, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
 
-from products.models import Product
-from .serializers import ProductSerializer
+from products.models import Product, CSVImportJob
+from .serializers import ProductSerializer, CSVImportJobSerializer
 from base.permissions import IsAuthenticatedOrReadOnly
 
 from base.utils import LargeResultsSetPagination
@@ -126,3 +130,48 @@ class ProductViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_204_NO_CONTENT
         )
+
+
+class CSVImportView(APIView):
+    permission_classes = [IsManagerOrAdmin]
+
+    def post(self, request):
+        """Accept a CSV file, save to a temp file, and queue the import task."""
+        from products.tasks import import_products_from_csv
+
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not file.name.endswith('.csv'):
+            return Response({'error': 'Only CSV files are accepted.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Save to a named temp file so the Celery worker can read it
+        suffix = '.csv'
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            for chunk in file.chunks():
+                tmp.write(chunk)
+            tmp_path = tmp.name
+
+        job = CSVImportJob.objects.create(user=request.user, file_path=tmp_path)
+        import_products_from_csv.delay(job.id)
+
+        serializer = CSVImportJobSerializer(job)
+        return Response(
+            {'message': 'Import job queued.', 'data': serializer.data},
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+
+class CSVImportStatusView(APIView):
+    permission_classes = [IsManagerOrAdmin]
+
+    def get(self, request, job_id):
+        """Return the current status and progress of a CSV import job."""
+        try:
+            job = CSVImportJob.objects.get(id=job_id, user=request.user)
+        except CSVImportJob.DoesNotExist:
+            return Response({'error': 'Job not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CSVImportJobSerializer(job)
+        return Response({'data': serializer.data})

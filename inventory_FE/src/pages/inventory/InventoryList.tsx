@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, AlertTriangle, Save } from 'lucide-react';
+import { Plus, Package, Warehouse as WarehouseIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/tables/DataTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { inventoryService } from '@/features/inventory/services/inventoryService';
@@ -23,7 +24,8 @@ export function InventoryList() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, quantity }: { id: string; quantity: number }) => inventoryService.updateStock(id, quantity),
+    mutationFn: ({ id, quantity_available }: { id: string; quantity_available: number }) =>
+      inventoryService.updateStock(id, quantity_available),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       setSelectedItem(null);
@@ -41,29 +43,27 @@ export function InventoryList() {
   const inventory = data?.data || [];
   const totalItems = data?.total_items || 0;
   const totalPages = data?.total_pages || 0;
-  const pageSize = data?.page_size || 0
+  const pageSize = data?.page_size || 0;
+
+  // Engagement stats derived from current page data
+  const distinctProducts = new Set(inventory.map((item: any) => item.product_details?.id ?? item.product)).size;
+  const distinctWarehouses = new Set(inventory.map((item: any) => item.warehouse_details?.id ?? item.warehouse)).size;
 
   const columns = [
-    { header: 'Product', accessor: (item: InventoryItem) => item.product_details.name },
-    { header: 'Warehouse', accessor: (item: InventoryItem) => item.warehouse_details.name },
-    // {
-    //   header: 'Stock Level',
-    //   accessor: (item: InventoryItem) => (
-    //     <div className="flex items-center gap-2">
-    //       <span className={cn(
-    //         "font-bold",
-    //         item.quantity <= item.reserved_quantity ? "text-destructive" : "text-foreground"
-    //       )}>
-    //         {item.quantity}
-    //       </span>
-    //       {item.quantity <= item.reserved_quantity && (
-    //         <AlertTriangle size={14} className="text-destructive" />
-    //       )}
-    //     </div>
-    //   ),
-    // },
-    { header: 'Stock Level', accessor: (item: InventoryItem) => item?.reserved_quantity },
-    { header: 'Threshold', accessor: (item: InventoryItem) => item?.quantity_available },
+    { header: 'Product', accessor: (item: InventoryItem) => item.product_details?.name },
+    { header: 'Warehouse', accessor: (item: InventoryItem) => item.warehouse_details?.name },
+    {
+      header: 'Available',
+      accessor: (item: InventoryItem) => (
+        <span className={item.quantity_available <= 10 ? 'text-destructive font-semibold' : ''}>
+          {item.quantity_available}
+        </span>
+      ),
+    },
+    {
+      header: 'Reserved',
+      accessor: (item: InventoryItem) => item.reserved_quantity,
+    },
     {
       header: 'Actions',
       accessor: (item: InventoryItem) => (
@@ -73,10 +73,6 @@ export function InventoryList() {
       ),
     },
   ];
-
-  function cn(...inputs: any[]) {
-    return inputs.filter(Boolean).join(' ');
-  }
 
   return (
     <div className="space-y-6">
@@ -109,7 +105,11 @@ export function InventoryList() {
                 <Label>Quantity</Label>
                 <Input type="number" placeholder="100" />
               </div>
-              <Button className="w-full" onClick={() => createMutation.mutate({})} disabled={createMutation.isPending}>
+              <Button
+                className="w-full"
+                onClick={() => createMutation.mutate({})}
+                disabled={createMutation.isPending}
+              >
                 {createMutation.isPending ? 'Saving...' : 'Add Inventory'}
               </Button>
             </div>
@@ -117,11 +117,40 @@ export function InventoryList() {
         </Dialog>
       </div>
 
+      {/* Engagement cards */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card className="border border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Products in Stock</CardTitle>
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Package size={18} className="text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{isLoading ? '—' : totalItems > pageSize ? `${distinctProducts}+` : distinctProducts}</p>
+            <p className="text-xs text-muted-foreground mt-1">Unique products tracked on this page</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active Warehouses</CardTitle>
+            <div className="p-2 rounded-lg bg-primary/10">
+              <WarehouseIcon size={18} className="text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{isLoading ? '—' : distinctWarehouses}</p>
+            <p className="text-xs text-muted-foreground mt-1">Warehouses with active inventory</p>
+          </CardContent>
+        </Card>
+      </div>
+
       <DataTable
         data={inventory}
         columns={columns}
         isLoading={isLoading}
-        onSearch={setSearch}
+        onSearch={(q) => { setSearch(q); setPage(1); }}
         onPageChange={setPage}
         currentPage={page}
         totalPages={totalPages}
@@ -129,17 +158,21 @@ export function InventoryList() {
         pageSize={pageSize}
       />
 
-      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
+      <Dialog open={!!selectedItem} onOpenChange={() => { setSelectedItem(null); setUpdateQuantity(''); }}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Adjust Stock Level</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <p className="text-sm text-muted-foreground">
-              Updating stock for <span className="font-medium text-foreground">{selectedItem?.product.name}</span> in {selectedItem?.warehouse.name}.
+              Updating stock for{' '}
+              <span className="font-medium text-foreground">
+                {selectedItem?.product_details?.name}
+              </span>{' '}
+              in {selectedItem?.warehouse_details?.name}.
             </p>
             <div className="space-y-2">
-              <Label>New Quantity</Label>
+              <Label>New Quantity Available</Label>
               <Input
                 type="number"
                 value={updateQuantity}
@@ -151,7 +184,10 @@ export function InventoryList() {
               className="w-full"
               onClick={() => {
                 if (selectedItem) {
-                  updateMutation.mutate({ id: selectedItem.id, quantity: parseInt(updateQuantity) });
+                  updateMutation.mutate({
+                    id: selectedItem.id,
+                    quantity_available: parseInt(updateQuantity),
+                  });
                 }
               }}
               disabled={updateMutation.isPending || !updateQuantity}

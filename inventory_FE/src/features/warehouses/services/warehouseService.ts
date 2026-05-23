@@ -2,7 +2,7 @@ import apiClient from '@/api/axios';
 import { Warehouse, ApiResponse, PaginatedResponse } from '@/types';
 
 export const warehouseService = {
-  async getWarehouses(): Promise<ApiResponse<PaginatedResponse<Warehouse>>> {
+  async getWarehouses(): Promise<PaginatedResponse<Warehouse>> {
     const response = await apiClient.get('/warehouses/v1/warehouses/');
     return response.data;
   },

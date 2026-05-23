@@ -52,6 +52,8 @@ EXTERNAL_APPS = [
     'orders',
     'notifications',
     'audit_logs',
+    'django_celery_beat',
+    'django_celery_results',
 ]
 INSTALLED_APPS+=EXTERNAL_APPS
 
@@ -308,6 +310,14 @@ JAZZMIN_UI_CONFIG = {
         "success": "btn-success"
     }
 }
+
+# Celery
+CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_CACHE_BACKEND = "default"
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
 
 LOGS_DIR = BASE_DIR / 'logs'
 LOGS_DIR.mkdir(exist_ok=True)

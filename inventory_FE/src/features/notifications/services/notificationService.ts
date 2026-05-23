@@ -2,7 +2,7 @@ import apiClient from '@/api/axios';
 import { Notification, ApiResponse, PaginatedResponse } from '@/types';
 
 export const notificationService = {
-  async getNotifications(): Promise<ApiResponse<PaginatedResponse<Notification>>> {
+  async getNotifications(): Promise<PaginatedResponse<Notification>> {
     const response = await apiClient.get('/notifications/v1/notifications/');
     return response.data;
   },

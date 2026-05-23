@@ -23,7 +23,8 @@ interface DataTableProps<T> {
   currentPage?: number;
   totalPages?: number;
   totalItems?: number;
-  pageSize?: number
+  pageSize?: number;
+  hideSearch?: boolean;
 }
 
 export function DataTable<T>({
@@ -35,30 +36,34 @@ export function DataTable<T>({
   currentPage,
   totalPages,
   totalItems,
-  pageSize
+  pageSize,
+  hideSearch
 }: DataTableProps<T>) {
 
+  const ps = pageSize ?? 0;
   const startItem = totalItems === 0
     ? 0
-    : (currentPage! - 1) * pageSize + 1;
+    : (currentPage! - 1) * ps + 1;
 
   const endItem = Math.min(
-    (currentPage! - 1) * pageSize + data.length,
+    (currentPage! - 1) * ps + data.length,
     totalItems!
   );
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-          <Input
-            placeholder="Search..."
-            className="pl-9"
-            onChange={(e) => onSearch?.(e.target.value)}
-          />
+      {!hideSearch && onSearch && (
+        <div className="flex items-center justify-between gap-4">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+            <Input
+              placeholder="Search..."
+              className="pl-9"
+              onChange={(e) => onSearch?.(e.target.value)}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="rounded-md border border-border bg-card overflow-hidden">
         <Table>
