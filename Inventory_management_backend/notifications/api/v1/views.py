@@ -7,8 +7,8 @@ from notifications.models import Notification
 from .serializers import NotificationSerializer
 from base.utils import LargeResultsSetPagination
 
+
 class NotificationViewSet(viewsets.ModelViewSet):
-    queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -16,6 +16,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
     search_fields = ['message']
     ordering_fields = ['created_at']
     pagination_class = LargeResultsSetPagination
+    http_method_names = ['get', 'patch', 'head', 'options']  # disallow POST/PUT/DELETE from clients
 
     def get_queryset(self):
         return Notification.objects.filter(user=self.request.user).order_by('-created_at')
@@ -23,14 +24,19 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
-
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-
         serializer = self.get_serializer(queryset, many=True)
         return Response({
             "message": "Notifications fetched successfully",
             "count": queryset.count(),
-            "data": serializer.data
+            "data": serializer.data,
         })
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"message": "Notification updated", "data": serializer.data})

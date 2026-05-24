@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Package, Warehouse as WarehouseIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/tables/DataTable';
@@ -50,7 +51,9 @@ export function InventoryList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       setSelectedItem(null);
+      toast.success('Stock level updated successfully!');
     },
+    onError: () => toast.error('Failed to update stock.'),
   });
 
   const createMutation = useMutation({
@@ -61,7 +64,9 @@ export function InventoryList() {
       setProductId('');
       setWarehouseId('');
       setQuantity('0');
+      toast.success('Inventory added successfully!');
     },
+    onError: () => toast.error('Failed to add inventory.'),
   });
 
   const inventory = data?.data || [];

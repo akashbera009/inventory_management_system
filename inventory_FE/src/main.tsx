@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { ThemeProvider } from '@/providers/ThemeProvider';
 import { router } from '@/routes';
+import { Toaster } from 'sonner';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -11,8 +12,8 @@ createRoot(document.getElementById('root')!).render(
     <QueryProvider>
       <ThemeProvider>
         <RouterProvider router={router} />
+        <Toaster position="top-right" richColors closeButton />
       </ThemeProvider>
     </QueryProvider>
   </StrictMode>,
 );
-

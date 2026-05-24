@@ -7,11 +7,11 @@ import {
   ShoppingCart,
   Bell,
   FileText,
-  Settings,
   LogOut,
   Menu,
   X,
-  User as UserIcon
+  User as UserIcon,
+  Store,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -21,53 +21,60 @@ import { ProfileModal } from '@/features/accounts/components/ProfileModal';
 
 const MENU_ITEMS = [
   {
+    id: 'shop',
+    label: 'Shop',
+    icon: Store,
+    path: '/shop',
+    roles: ['BUYER'],
+  },
+  {
     id: 'dashboard',
     label: 'Dashboard',
     icon: LayoutDashboard,
     path: '/',
-    roles: ['ADMIN', 'MANAGER', 'STAFF']
+    roles: ['ADMIN', 'MANAGER', 'STAFF'],
   },
   {
     id: 'products',
     label: 'Products',
     icon: Package,
     path: '/products',
-    roles: ['ADMIN', 'MANAGER', 'STAFF']
+    roles: ['ADMIN', 'MANAGER', 'STAFF'],
   },
   {
     id: 'warehouses',
     label: 'Warehouses',
     icon: Warehouse,
     path: '/warehouses',
-    roles: ['ADMIN', 'MANAGER']
+    roles: ['ADMIN', 'MANAGER'],
   },
   {
     id: 'inventory',
     label: 'Inventory',
     icon: Package,
     path: '/inventory',
-    roles: ['ADMIN', 'MANAGER']
+    roles: ['ADMIN', 'MANAGER'],
   },
   {
     id: 'orders',
     label: 'Orders',
     icon: ShoppingCart,
     path: '/orders',
-    roles: ['ADMIN', 'MANAGER', 'STAFF']
+    roles: ['ADMIN', 'MANAGER', 'STAFF', 'BUYER'],
   },
   {
     id: 'notifications',
     label: 'Notifications',
     icon: Bell,
     path: '/notifications',
-    roles: ['STAFF']
+    roles: ['STAFF', 'MANAGER', 'BUYER'],
   },
   {
     id: 'audit-logs',
     label: 'Audit Logs',
     icon: FileText,
     path: '/audit-logs',
-    roles: ['ADMIN']
+    roles: ['ADMIN'],
   },
 ];
 
@@ -80,12 +87,16 @@ export function DashboardLayout() {
 
   useEffect(() => {
     console.log('user', user);
-  }, [user])
+  }, [user]);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  const visibleItems = MENU_ITEMS.filter((item) =>
+    item.roles.includes(user?.role || 'BUYER')
+  );
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -117,16 +128,15 @@ export function DashboardLayout() {
             </div>
 
             <nav className="flex-1 px-4 space-y-2 mt-4">
-              {/* {MENU_ITEMS.filter(item => item.roles.includes(user?.role || 'STAFF')).map((item) => ( */}
-              {MENU_ITEMS.filter(item => item.roles.includes(user?.role || 'STAFF')).map((item) => (
+              {visibleItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => navigate(item.path)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium",
+                    'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium',
                     location.pathname === item.path
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   )}
                 >
                   <item.icon size={18} />
@@ -158,12 +168,12 @@ export function DashboardLayout() {
               variant="ghost"
               size="icon"
               onClick={() => setSidebarOpen(true)}
-              className={cn("lg:hidden", !isSidebarOpen && "flex")}
+              className={cn('lg:hidden', !isSidebarOpen && 'flex')}
             >
               <Menu size={20} />
             </Button>
             <h2 className="text-sm font-medium text-muted-foreground hidden sm:block">
-              {MENU_ITEMS.find(item => item.path === location.pathname)?.label || 'Overview'}
+              {visibleItems.find((item) => item.path === location.pathname)?.label || 'Overview'}
             </h2>
           </div>
 

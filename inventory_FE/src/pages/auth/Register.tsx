@@ -18,15 +18,7 @@ const registerSchema = z
 
     name: z.string().min(2, 'Name is required'),
 
-    // role: z.enum(['ADMIN', 'MANAGER', 'STAFF']),
-    role: z
-      .string()
-      .refine(
-        (value) => ['ADMIN', 'MANAGER', 'STAFF'].includes(value),
-        {
-          message: 'Please select a valid role',
-        }
-      ),
+    role: z.string().default('BUYER'),
 
     date_of_birth: z.string().min(1, 'Date of birth is required'),
 
@@ -58,25 +50,41 @@ export function Register() {
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      role: '',
+      role: 'BUYER',
     },
   });
 
+  console.log("Current Form Errors:", errors);
+
   const onSubmit = async (data: RegisterValues) => {
     try {
-      console.log('Submitting:', data);
+      const payload = {
+        ...data,
+        role: 'BUYER',
+      };
+      console.log('Submitting payload:', payload);
 
-      const response = await authService.register(data);
+      const response = await authService.register(payload);
 
       setAuth({
-        role: data.role,
+        role: 'BUYER',
         username: data.username,
       }, response.token!);
 
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration failed:', error);
-      alert('Registration failed. Please try again.');
+      const backendError = error?.response?.data;
+      let errMsg = 'Registration failed. Please try again.';
+      if (backendError && typeof backendError === 'object') {
+        const errorText = Object.entries(backendError)
+          .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(', ') : val}`)
+          .join('\n');
+        if (errorText) errMsg = errorText;
+      } else if (typeof backendError === 'string') {
+        errMsg = backendError;
+      }
+      alert(errMsg);
     }
   };
 
@@ -133,8 +141,8 @@ export function Register() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
+            {/*   <div className="space-y-2">
+             <Label htmlFor="role">Role</Label> 
 
               <select
                 id="role"
@@ -142,17 +150,18 @@ export function Register() {
                 className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="">Select Role</option>
-                <option value="ADMIN">Admin</option>
-                <option value="MANAGER">Manager</option>
+                <option value="BUYER">Buyer</option>
                 <option value="STAFF">Staff</option>
-              </select>
+                <option value="MANAGER">Manager</option>
+                <option value="ADMIN">Admin</option>
+              </select> 
 
               {errors.role && (
                 <p className="text-sm text-destructive">
                   {errors.role.message}
                 </p>
               )}
-            </div>
+            </div>*/}
             <div className="space-y-2">
               <Label htmlFor="date_of_birth">Date of Birth</Label>
               <Input

@@ -1,6 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit2, Trash2, Eye, SlidersHorizontal, Upload, Search } from 'lucide-react';
+import { toast } from 'sonner';
+
+function formatIST(dateStr?: string): string {
+  if (!dateStr) return '—';
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  }).format(new Date(dateStr)) + ' IST';
+}
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DataTable } from '@/components/tables/DataTable';
@@ -57,7 +71,9 @@ export function ProductList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setIsCreateOpen(false);
+      toast.success('Product added successfully!');
     },
+    onError: () => toast.error('Failed to add product.'),
   });
 
   const updateMutation = useMutation({
@@ -66,14 +82,18 @@ export function ProductList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setSelectedProduct(null);
+      toast.success('Product updated successfully!');
     },
+    onError: () => toast.error('Failed to update product.'),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => productService.deleteProduct(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Product deleted.');
     },
+    onError: () => toast.error('Failed to delete product.'),
   });
 
   const products = data?.data || [];
@@ -117,17 +137,30 @@ export function ProductList() {
   const columns = [
     { header: 'Name', accessor: (p: Product) => p.name },
     { header: 'SKU', accessor: (p: Product) => <span className="font-mono text-xs">{p.sku}</span> },
-    { header: 'Category', accessor: (p: Product) => p.category },
+    { header: 'Category', accessor: (p: Product) => p.category || '—' },
     { header: 'Price', accessor: (p: Product) => `$${Number(p.price).toFixed(2)}` },
     {
       header: 'Status',
       accessor: (p: Product) => (
         <span
-          className={`px-2 py-0.5 rounded-full text-xs font-medium ${p.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}
+          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+            p.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}
         >
           {p.is_active ? 'Active' : 'Inactive'}
         </span>
+      ),
+    },
+    {
+      header: 'Created (GMT+5:30)',
+      accessor: (p: Product) => (
+        <span className="text-xs text-muted-foreground whitespace-nowrap">{formatIST(p.created_at)}</span>
+      ),
+    },
+    {
+      header: 'Updated (GMT+5:30)',
+      accessor: (p: Product) => (
+        <span className="text-xs text-muted-foreground whitespace-nowrap">{formatIST(p.updated_at)}</span>
       ),
     },
     {

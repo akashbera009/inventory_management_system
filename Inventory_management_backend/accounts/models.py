@@ -14,8 +14,9 @@ class User(AbstractUser , BaseModel):
         ('ADMIN', 'Admin'),
         ('MANAGER', 'Manager'),
         ('STAFF', 'Staff'),
+        ('BUYER', 'Buyer'),
     )
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='STAFF')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='BUYER')
     
     def __str__(self):
         return self.username

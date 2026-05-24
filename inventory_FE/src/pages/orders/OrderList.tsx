@@ -1,27 +1,26 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, AlertCircle } from 'lucide-react';
+import { Edit2, Trash2, AlertCircle, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/tables/DataTable';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { orderService } from '@/features/orders/services/orderService';
+import { useAuthStore } from '@/store/authStore';
 import { Order } from '@/types';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { cn } from '@/lib/utils';
 
-/** Extract a human-readable message from a DRF error response */
 function extractErrorMessage(error: unknown): string {
   const data = (error as any)?.response?.data;
   if (!data) return 'Something went wrong. Please try again.';
-  // Field-level: { status: ["msg"] }
   if (typeof data === 'object') {
-    for (const key of ['detail', 'message', 'non_field_errors', 'status']) {
+    for (const key of ['detail', 'message', 'non_field_errors', 'status', 'error']) {
       const val = data[key];
       if (Array.isArray(val) && val.length) return val[0];
       if (typeof val === 'string') return val;
     }
-    // Fallback: first value of any field
     const firstVal = Object.values(data)[0];
     if (Array.isArray(firstVal) && firstVal.length) return String(firstVal[0]);
     if (typeof firstVal === 'string') return firstVal;
@@ -29,27 +28,32 @@ function extractErrorMessage(error: unknown): string {
   return String(data);
 }
 
+const CATEGORY_PILLS = [
+  { label: 'All', value: '' },
+  { label: 'Electronics', value: 'Electronics' },
+  { label: 'Clothing', value: 'Clothing' },
+  { label: 'Food & Beverage', value: 'Food & Beverage' },
+  { label: 'Home & Garden', value: 'Home & Garden' },
+];
+
 export function OrderList() {
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
+  const isManagerOrAdmin = user?.role === 'ADMIN' || user?.role === 'MANAGER';
+  const isBuyer = user?.role === 'BUYER';
+
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [filterStatus, setFilterStatus] = useState(''); // Holds status filter for the table list
-  const [editStatus, setEditStatus] = useState('');     // Holds selected status inside the update modal
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [editStatus, setEditStatus] = useState('');
   const [updateError, setUpdateError] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['orders', { page, search, status: filterStatus }],
-    queryFn: () => orderService.getOrders({ page, search, status: filterStatus }),
-  });
-
-  const createMutation = useMutation({
-    mutationFn: orderService.createOrder,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      setIsCreateOpen(false);
-    },
+    queryKey: ['orders', { page, search, status: filterStatus, category: filterCategory }],
+    queryFn: () =>
+      orderService.getOrders({ page, search, status: filterStatus, category: filterCategory }),
   });
 
   const updateMutation = useMutation({
@@ -59,6 +63,7 @@ export function OrderList() {
       setSelectedOrder(null);
       setEditStatus('');
       setUpdateError(null);
+      toast.success('Order status updated successfully!');
     },
     onError: (error) => {
       setUpdateError(extractErrorMessage(error));
@@ -69,87 +74,184 @@ export function OrderList() {
     mutationFn: orderService.deleteOrder,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast.success('Order deleted.');
     },
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: orderService.cancelOrder,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast.success('Order cancelled successfully.');
+    },
+    onError: (error) => toast.error(extractErrorMessage(error)),
   });
 
   const orders = data?.data || [];
   const totalItems = data?.total_items || 0;
   const totalPages = data?.total_pages;
-  const pageSize = data?.page_size || 0
+  const pageSize = data?.page_size || 0;
 
-  const columns = [
-    { header: 'Order ID', accessor: (o: Order) => <span className="font-mono text-xs">{o.id}</span> },
-    { header: 'Customer', accessor: (o: Order) => o.user },
-    { header: 'Total', accessor: (o: Order) => `$${Number(o.total_price).toFixed(2)}` },
-    {
-      header: 'Status',
-      accessor: (o: Order) => <StatusBadge status={o.status} />,
+  /* ── Role-aware column definitions ─────────────────────── */
+
+  // Shared columns
+  const colOrderNum = {
+    header: 'Order #',
+    accessor: (o: Order) => (
+      <span className="font-mono text-xs">{o.order_number || o.id}</span>
+    ),
+  };
+
+  const colCustomer = {
+    header: 'Customer',
+    accessor: (o: Order) => o.user || '—',
+  };
+
+  const colTotal = {
+    header: 'Total',
+    accessor: (o: Order) => `$${Number(o.total_price).toFixed(2)}`,
+  };
+
+  const colStatus = {
+    header: 'Status',
+    accessor: (o: Order) => <StatusBadge status={o.status} />,
+  };
+
+  const colPlacedAt = {
+    header: 'Placed At (IST)',
+    accessor: (o: Order) => {
+      if (!o.created_at) return '—';
+      try {
+        const date = new Date(o.created_at);
+        return date.toLocaleString('en-IN', {
+          timeZone: 'Asia/Kolkata',
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        });
+      } catch (e) {
+        return '—';
+      }
     },
-    {
-      header: 'Actions',
-      accessor: (o: Order) => (
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm"
-            onClick={() => {
-              setSelectedOrder(o);
-              setEditStatus(o.status || '');
-            }}>
-            <Edit2 size={14} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-destructive"
-            onClick={() => {
-              if (confirm(`Are you sure you want to delete order ${o.id}?`)) {
-                deleteMutation.mutate(o.id);
-              }
-            }}
-          >
-            <Trash2 size={14} />
-          </Button>
-        </div>
-      ),
+  };
+
+  // Admin / Manager: edit status + delete
+  const colAdminActions = {
+    header: 'Actions',
+    accessor: (o: Order) => (
+      <div className="flex gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          title="Update status"
+          onClick={() => { setSelectedOrder(o); setEditStatus(o.status || ''); }}
+        >
+          <Edit2 size={14} />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-destructive"
+          title="Delete"
+          onClick={() => {
+            if (confirm(`Delete order ${o.order_number || o.id}?`)) {
+              deleteMutation.mutate(o.id);
+            }
+          }}
+        >
+          <Trash2 size={14} />
+        </Button>
+      </div>
+    ),
+  };
+
+  // Buyer: cancel if pending
+  const colBuyerActions = {
+    header: 'Actions',
+    accessor: (o: Order) => {
+      const isPending = o.status?.toLowerCase() === 'pending';
+      if (!isPending) return <span className="text-xs text-muted-foreground">—</span>;
+      return (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-destructive hover:bg-destructive/10"
+          disabled={cancelMutation.isPending}
+          onClick={() => {
+            if (confirm('Are you sure you want to cancel this order?')) {
+              cancelMutation.mutate(o.id);
+            }
+          }}
+        >
+          <XCircle size={14} />
+          Cancel
+        </Button>
+      );
     },
-  ];
+  };
+
+  const columns = isManagerOrAdmin
+    ? [colOrderNum, colCustomer, colTotal, colPlacedAt, colStatus, colAdminActions]
+    : isBuyer
+    ? [colOrderNum, colTotal, colPlacedAt, colStatus, colBuyerActions]
+    : [colOrderNum, colCustomer, colTotal, colPlacedAt, colStatus]; // STAFF: read-only
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
-          <p className="text-muted-foreground">Track and manage customer orders and fulfillment.</p>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+        <p className="text-muted-foreground">
+          {isBuyer ? 'View your orders and cancel pending ones.' : 'Track and manage customer orders.'}
+        </p>
+      </div>
+
+      {/* Category pill filters */}
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-2">
+          {CATEGORY_PILLS.map((cat) => (
+            <button
+              key={cat.value}
+              onClick={() => { setFilterCategory(cat.value); setPage(1); }}
+              className={cn(
+                'px-4 py-1.5 rounded-full text-sm font-medium border transition-colors',
+                filterCategory === cat.value
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+              )}
+            >
+              {cat.label}
+            </button>
+          ))}
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus size={18} />
-              Create Order
+
+        {/* Status filter */}
+        <div className="flex items-center gap-3">
+          <select
+            className="text-sm border border-border rounded-md px-3 py-1.5 bg-background"
+            value={filterStatus}
+            onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
+          >
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="completed">Completed</option>
+          </select>
+          {(filterStatus || filterCategory) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground"
+              onClick={() => { setFilterStatus(''); setFilterCategory(''); setPage(1); }}
+            >
+              Clear filters
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Create New Order</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Customer Name</Label>
-                <Input placeholder="John Doe" />
-              </div>
-              <div className="space-y-2">
-                <Label>Items</Label>
-                <div className="flex gap-2">
-                  <Input placeholder="Product ID" />
-                  <Input type="number" placeholder="Qty" className="w-20" />
-                  <Button variant="outline" size="sm"><Plus size={14} /></Button>
-                </div>
-              </div>
-              <Button className="w-full" onClick={() => createMutation.mutate({})} disabled={createMutation.isPending}>
-                {createMutation.isPending ? 'Creating...' : 'Place Order'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+          )}
+        </div>
       </div>
 
       <DataTable
@@ -164,14 +266,11 @@ export function OrderList() {
         pageSize={pageSize}
       />
 
+      {/* Update status dialog — MANAGER / ADMIN only */}
       <Dialog
         open={!!selectedOrder}
         onOpenChange={(open) => {
-          if (!open) {
-            setSelectedOrder(null);
-            setEditStatus('');
-            setUpdateError(null);
-          }
+          if (!open) { setSelectedOrder(null); setEditStatus(''); setUpdateError(null); }
         }}
       >
         <DialogContent className="sm:max-w-[425px]">
@@ -180,23 +279,22 @@ export function OrderList() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <p className="text-sm text-muted-foreground">
-              Update status for Order <span className="font-medium text-foreground">{selectedOrder?.id}</span>.
+              Order{' '}
+              <span className="font-medium text-foreground font-mono">
+                {selectedOrder?.order_number || selectedOrder?.id}
+              </span>
             </p>
             <div className="space-y-2">
-              <Label>Order Status</Label>
+              <Label>New Status</Label>
               <select
                 className="w-full p-2 rounded-md border border-border bg-background text-sm"
                 value={editStatus}
                 onChange={(e) => { setEditStatus(e.target.value); setUpdateError(null); }}
               >
                 <option value="">Select Status</option>
-
                 <option value="pending">Pending</option>
-
                 <option value="confirmed">Confirmed</option>
-
                 <option value="cancelled">Cancelled</option>
-
                 <option value="completed">Completed</option>
               </select>
             </div>
@@ -206,19 +304,15 @@ export function OrderList() {
                 <span>{updateError}</span>
               </div>
             )}
-
             <Button
               className="w-full"
               onClick={() => {
                 if (!selectedOrder || !editStatus) return;
-                updateMutation.mutate({
-                  id: selectedOrder.id,
-                  data: { status: editStatus },
-                });
+                updateMutation.mutate({ id: selectedOrder.id, data: { status: editStatus } });
               }}
               disabled={updateMutation.isPending || !editStatus}
             >
-              {updateMutation.isPending ? 'Updating...' : 'Update Status'}
+              {updateMutation.isPending ? 'Updating…' : 'Update Status'}
             </Button>
           </div>
         </DialogContent>

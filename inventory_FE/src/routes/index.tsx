@@ -8,6 +8,7 @@ import { InventoryList } from '@/pages/inventory/InventoryList';
 import { OrderList } from '@/pages/orders/OrderList';
 import { NotificationList } from '@/pages/notifications/NotificationList';
 import { AuditLogList } from '@/pages/auditLogs/AuditLogList';
+import { ShopPage } from '@/pages/shop/ShopPage';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
 import { RoleRoute } from '@/components/common/RoleRoute';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
@@ -31,6 +32,14 @@ export const router = createBrowserRouter([
       {
         path: '/',
         element: <Dashboard />,
+      },
+      {
+        path: '/shop',
+        element: (
+          <RoleRoute allowedRoles={['BUYER']}>
+            <ShopPage />
+          </RoleRoute>
+        ),
       },
       {
         path: '/products',
@@ -62,7 +71,6 @@ export const router = createBrowserRouter([
       },
       {
         path: '/admin',
-
         element: (
           <RoleRoute allowedRoles={['ADMIN']}>
             <div className="p-4">Admin Only Page</div>

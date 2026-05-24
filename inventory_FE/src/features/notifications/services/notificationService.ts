@@ -8,7 +8,7 @@ export const notificationService = {
   },
 
   async markAsRead(id: string): Promise<ApiResponse<void>> {
-    const response = await apiClient.patch(`/notifications/v1/notifications/${id}/`, { isRead: true });
+    const response = await apiClient.patch(`/notifications/v1/notifications/${id}/`, { is_read: true });
     return response.data;
   },
 };

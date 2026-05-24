@@ -2,7 +2,17 @@ import apiClient from '@/api/axios';
 import { Product, ApiResponse, PaginatedResponse } from '@/types';
 
 export const productService = {
-  async getProducts(params: { page?: number; search?: string; category?: string; is_active?: string; ordering?: string } = {}): Promise<PaginatedResponse<Product>> {
+  async getProducts(
+    params: {
+      page?: number;
+      page_size?: number;
+      search?: string;
+      category?: string;
+      is_active?: string;
+      in_stock?: string;
+      ordering?: string;
+    } = {}
+  ): Promise<PaginatedResponse<Product>> {
     const response = await apiClient.get('/products/v1/products/', { params });
     return response.data;
   },

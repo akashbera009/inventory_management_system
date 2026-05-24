@@ -22,6 +22,13 @@ class IsAdminUserRole(permissions.BasePermission):
 class IsManagerOrAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         return bool(
-            request.user and request.user.is_authenticated and 
+            request.user and request.user.is_authenticated and
             request.user.role in ['ADMIN', 'MANAGER']
+        )
+
+class IsBuyer(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return bool(
+            request.user and request.user.is_authenticated and
+            request.user.role == 'BUYER'
         )

@@ -1,4 +1,4 @@
-export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF';
+export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'BUYER';
 
 export interface User {
   id: string;
@@ -16,6 +16,7 @@ export interface Product {
   weight: number;
   category?: string;
   is_active: boolean;
+  total_stock?: number;
   created_at?: string;
   updated_at?: string;
   createdAt?: string;
@@ -76,9 +77,8 @@ export interface OrderItem {
 export interface Notification {
   id: string;
   message: string;
-  type: 'INFO' | 'WARNING' | 'ERROR' | 'SUCCESS';
-  isRead: boolean;
-  createdAt: string;
+  is_read: boolean;
+  created_at: string;
 }
 
 export interface AuditLog {

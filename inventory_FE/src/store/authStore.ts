@@ -1,16 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  role: 'ADMIN' | 'MANAGER' | 'STAFF';
-}
+export type AppRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'BUYER';
 
 interface AuthUser {
-  role: string;
-  username: string
+  role: AppRole;
+  username: string;
 }
 
 interface AuthState {
@@ -21,7 +16,6 @@ interface AuthState {
   setAuth: (user: AuthUser, token: string) => void;
   logout: () => void;
 }
-
 
 export const useAuthStore = create<AuthState>()(
   persist(

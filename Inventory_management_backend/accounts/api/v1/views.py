@@ -17,7 +17,7 @@ class RegisterView(APIView):
                 return Response({
                     'message': 'Registration successful',
                     'token': user.token,
-                    'user': user
+                    'user': UserProfileSerializer(user).data
                 }, status=status.HTTP_201_CREATED)
             except Exception as e:
                 return Response({
