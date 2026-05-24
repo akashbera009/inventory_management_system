@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/tables/DataTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { inventoryService } from '@/features/inventory/services/inventoryService';
+import { productService } from '@/features/products/services/productService';
+import { warehouseService } from '@/features/warehouses/services/warehouseService';
 import { InventoryItem } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,10 +20,29 @@ export function InventoryList() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [updateQuantity, setUpdateQuantity] = useState('');
 
+  // Add stock form state
+  const [productId, setProductId] = useState('');
+  const [warehouseId, setWarehouseId] = useState('');
+  const [quantity, setQuantity] = useState('0');
+
   const { data, isLoading } = useQuery({
     queryKey: ['inventory', { page, search }],
     queryFn: () => inventoryService.getInventory({ page, search }),
   });
+
+  // Query products and warehouses for dropdown selects
+  const { data: productsData } = useQuery({
+    queryKey: ['products-for-select'],
+    queryFn: () => productService.getProducts({ page: 1 }),
+  });
+
+  const { data: warehousesData } = useQuery({
+    queryKey: ['warehouses-for-select'],
+    queryFn: () => warehouseService.getWarehouses(),
+  });
+
+  const productList = productsData?.data || [];
+  const warehouseList = warehousesData?.data || [];
 
   const updateMutation = useMutation({
     mutationFn: ({ id, quantity_available }: { id: string; quantity_available: number }) =>
@@ -37,6 +58,9 @@ export function InventoryList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       setIsCreateOpen(false);
+      setProductId('');
+      setWarehouseId('');
+      setQuantity('0');
     },
   });
 
@@ -94,21 +118,61 @@ export function InventoryList() {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Product ID</Label>
-                <Input placeholder="Product ID" />
+                <Label htmlFor="product-select">Product</Label>
+                <select
+                  id="product-select"
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  value={productId}
+                  onChange={(e) => setProductId(e.target.value)}
+                >
+                  <option value="">Select a Product</option>
+                  {productList.map((prod: any) => (
+                    <option key={prod.id} value={prod.id}>
+                      {prod.name} ({prod.sku})
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-2">
-                <Label>Warehouse ID</Label>
-                <Input placeholder="Warehouse ID" />
+                <Label htmlFor="warehouse-select">Warehouse</Label>
+                <select
+                  id="warehouse-select"
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  value={warehouseId}
+                  onChange={(e) => setWarehouseId(e.target.value)}
+                >
+                  <option value="">Select a Warehouse</option>
+                  {warehouseList.map((wh: any) => (
+                    <option key={wh.id} value={wh.id}>
+                      {wh.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-2">
-                <Label>Quantity</Label>
-                <Input type="number" placeholder="100" />
+                <Label htmlFor="quantity-input">Quantity</Label>
+                <Input
+                  id="quantity-input"
+                  type="number"
+                  placeholder="100"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                />
               </div>
               <Button
                 className="w-full"
-                onClick={() => createMutation.mutate({})}
-                disabled={createMutation.isPending}
+                onClick={() => {
+                  if (!productId || !warehouseId) {
+                    alert('Please select both a product and a warehouse.');
+                    return;
+                  }
+                  createMutation.mutate({
+                    product: productId,
+                    warehouse: warehouseId,
+                    quantity_available: parseInt(quantity) || 0,
+                  });
+                }}
+                disabled={createMutation.isPending || !productId || !warehouseId}
               >
                 {createMutation.isPending ? 'Saving...' : 'Add Inventory'}
               </Button>

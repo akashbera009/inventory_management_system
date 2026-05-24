@@ -3,7 +3,7 @@ import { ShoppingCart, Warehouse, Bell, DollarSign, AlertTriangle, PackageCheck 
 import { useQuery } from '@tanstack/react-query';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
-  CartesianGrid, Cell, TooltipProps,
+  CartesianGrid, Cell,
 } from 'recharts';
 
 import { StatCard } from '@/components/common/StatCard';
@@ -24,7 +24,7 @@ const STATUS_COLORS: Record<string, string> = {
   Cancelled: '#ef4444',
 };
 
-function ChartTooltip({ active, payload, label }: TooltipProps<number, string>) {
+function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   const color = STATUS_COLORS[label as string] ?? '#6b7280';
   return (
