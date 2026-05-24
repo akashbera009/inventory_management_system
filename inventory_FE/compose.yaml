@@ -1,0 +1,24 @@
+# Docker Compose configuration for the React Frontend (Vite)
+services:
+  server:
+    build:
+      context: .
+    ports:
+      - "5173:5173"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./package.json
+          target: /app/package.json
+        - action: rebuild
+          path: ./vite.config.ts
+          target: /app/vite.config.ts
