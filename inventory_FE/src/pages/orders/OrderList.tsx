@@ -110,7 +110,7 @@ export function OrderList() {
 
   const colTotal = {
     header: 'Total',
-    accessor: (o: Order) => `$${Number(o.total_price).toFixed(2)}`,
+    accessor: (o: Order) => `₹${Number(o.total_price).toFixed(2)}`,
   };
 
   const colStatus = {

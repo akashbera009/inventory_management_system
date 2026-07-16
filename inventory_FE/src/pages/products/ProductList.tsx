@@ -138,7 +138,7 @@ export function ProductList() {
     { header: 'Name', accessor: (p: Product) => p.name },
     { header: 'SKU', accessor: (p: Product) => <span className="font-mono text-xs">{p.sku}</span> },
     { header: 'Category', accessor: (p: Product) => p.category || '—' },
-    { header: 'Price', accessor: (p: Product) => `$${Number(p.price).toFixed(2)}` },
+    { header: 'Price', accessor: (p: Product) => `₹${Number(p.price).toFixed(2)}` },
     {
       header: 'Status',
       accessor: (p: Product) => (
@@ -155,12 +155,6 @@ export function ProductList() {
       header: 'Created (GMT+5:30)',
       accessor: (p: Product) => (
         <span className="text-xs text-muted-foreground whitespace-nowrap">{formatIST(p.created_at)}</span>
-      ),
-    },
-    {
-      header: 'Updated (GMT+5:30)',
-      accessor: (p: Product) => (
-        <span className="text-xs text-muted-foreground whitespace-nowrap">{formatIST(p.updated_at)}</span>
       ),
     },
     {

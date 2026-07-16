@@ -28,7 +28,7 @@ const SHOP_CATEGORIES = [
 /* ─── Payment helpers ────────────────────────────────────────── */
 
 function fmtCard(v: string) {
-  return v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+  return v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '₹1 ').trim();
 }
 function fmtExpiry(v: string) {
   const d = v.replace(/\D/g, '').slice(0, 4);
@@ -68,16 +68,16 @@ function ConfirmDialog({ open, onCancel, onConfirm }: ConfirmDialogProps) {
               <div key={item.product_id} className="flex items-center justify-between px-4 py-2.5 text-sm">
                 <div>
                   <p className="font-medium">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">{item.quantity} × ${item.price.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground">{item.quantity} × ₹{item.price.toFixed(2)}</p>
                 </div>
-                <span className="font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                <span className="font-semibold">₹{(item.price * item.quantity).toFixed(2)}</span>
               </div>
             ))}
           </div>
 
           <div className="flex justify-between items-center py-2 px-4 bg-muted/40 rounded-lg">
             <span className="text-sm font-medium">Order Total</span>
-            <span className="text-xl font-bold text-primary">${total().toFixed(2)}</span>
+            <span className="text-xl font-bold text-primary">₹{total().toFixed(2)}</span>
           </div>
 
           <div className="flex gap-3 pt-1">
@@ -137,7 +137,7 @@ function PaymentModal({ open, onClose, onPay, isPending }: PaymentModalProps) {
           {/* Amount banner */}
           <div className="flex items-center justify-between bg-primary/8 border border-primary/20 rounded-xl px-4 py-3">
             <span className="text-sm text-muted-foreground font-medium">Amount to Pay</span>
-            <span className="text-2xl font-bold text-primary">${total().toFixed(2)}</span>
+            <span className="text-2xl font-bold text-primary">₹{total().toFixed(2)}</span>
           </div>
 
           {/* Card number */}
@@ -200,7 +200,7 @@ function PaymentModal({ open, onClose, onPay, isPending }: PaymentModalProps) {
 
           <Button
             className="w-full gap-2 text-base h-11"
-            disabled={!isValid || isPending}
+            disabled={isValid || isPending}
             onClick={onPay}
           >
             {isPending ? (
@@ -208,7 +208,7 @@ function PaymentModal({ open, onClose, onPay, isPending }: PaymentModalProps) {
             ) : (
               <>
                 <CheckCircle2 size={16} />
-                Pay ${total().toFixed(2)}
+                Pay ₹{total().toFixed(2)}
               </>
             )}
           </Button>
@@ -371,7 +371,7 @@ export function ShopPage() {
                     )}
                   </div>
 
-                  <p className="text-lg font-bold text-primary">${Number(product.price).toFixed(2)}</p>
+                  <p className="text-lg font-bold text-primary">₹{Number(product.price).toFixed(2)}</p>
 
                   <p className="text-xs text-muted-foreground">
                     {stock} unit{stock !== 1 ? 's' : ''} left
@@ -481,11 +481,11 @@ export function ShopPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{item.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {item.quantity} × ${item.price.toFixed(2)}
+                        {item.quantity} × ₹{item.price.toFixed(2)}
                       </p>
                     </div>
                     <span className="text-sm font-semibold shrink-0">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ₹{(item.price * item.quantity).toFixed(2)}
                     </span>
                     <Button
                       variant="ghost"
@@ -503,7 +503,7 @@ export function ShopPage() {
               <div className="border-t border-border p-4 space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Total</span>
-                  <span className="text-xl font-bold">${total().toFixed(2)}</span>
+                  <span className="text-xl font-bold">₹{total().toFixed(2)}</span>
                 </div>
                 <Button
                   className="w-full gap-2"

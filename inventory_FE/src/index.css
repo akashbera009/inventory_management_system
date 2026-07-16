@@ -77,6 +77,35 @@
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0)
   }
+
+  /* 🎭 Role-based Dynamic Theme Colors */
+  .role-admin, .role-manager {
+    --primary: oklch(0.50 0.18 260);
+    --ring: oklch(0.50 0.18 260);
+  }
+  .dark.role-admin, .dark.role-manager {
+    --primary: oklch(0.72 0.14 250);
+    --ring: oklch(0.72 0.14 250);
+  }
+
+  .role-buyer {
+    --primary: oklch(0.52 0.17 170);
+    --ring: oklch(0.52 0.17 170);
+  }
+  .dark.role-buyer {
+    --primary: oklch(0.76 0.14 165);
+    --ring: oklch(0.76 0.14 165);
+  }
+
+  .role-staff {
+    --primary: oklch(0.58 0.18 45);
+    --ring: oklch(0.58 0.18 45);
+  }
+  .dark.role-staff {
+    --primary: oklch(0.78 0.14 50);
+    --ring: oklch(0.78 0.14 50);
+  }
+
   * {
     @apply border-border;
   }

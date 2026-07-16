@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { Plus, Package, Warehouse as WarehouseIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ export function InventoryList() {
   const [productId, setProductId] = useState('');
   const [warehouseId, setWarehouseId] = useState('');
   const [quantity, setQuantity] = useState('0');
+  const [productSearch, setProductSearch] = useState('');
 
   const { data, isLoading } = useQuery({
     queryKey: ['inventory', { page, search }],
@@ -32,9 +33,18 @@ export function InventoryList() {
   });
 
   // Query products and warehouses for dropdown selects
-  const { data: productsData } = useQuery({
-    queryKey: ['products-for-select'],
-    queryFn: () => productService.getProducts({ page: 1 }),
+  const {
+    data: productsData,
+    fetchNextPage: fetchNextProducts,
+    hasNextPage: hasNextProducts,
+    isFetchingNextPage: isFetchingNextProducts,
+  } = useInfiniteQuery({
+    queryKey: ['products-for-select', productSearch],
+    queryFn: ({ pageParam = 1 }) => productService.getProducts({ page: pageParam as number, search: productSearch }),
+    getNextPageParam: (lastPage, allPages) => {
+      return allPages.length < (lastPage.total_pages || 1) ? allPages.length + 1 : undefined;
+    },
+    initialPageParam: 1,
   });
 
   const { data: warehousesData } = useQuery({
@@ -42,7 +52,7 @@ export function InventoryList() {
     queryFn: () => warehouseService.getWarehouses(),
   });
 
-  const productList = productsData?.data || [];
+  const productList = productsData?.pages.flatMap((page) => page.data || []) || [];
   const warehouseList = warehousesData?.data || [];
 
   const updateMutation = useMutation({
@@ -122,21 +132,53 @@ export function InventoryList() {
               <DialogTitle>Add Stock to Warehouse</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              <div className="flex gap-4">
+                <div className="space-y-2 flex-1">
+                  <Label htmlFor="product-id-input">Product ID</Label>
+                  <Input
+                    id="product-id-input"
+                    placeholder="Enter Product ID"
+                    value={productId}
+                    onChange={(e) => setProductId(e.target.value)}
+                  />
+                </div>
+              </div>
               <div className="space-y-2">
-                <Label htmlFor="product-select">Product</Label>
-                <select
-                  id="product-select"
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                  value={productId}
-                  onChange={(e) => setProductId(e.target.value)}
+                <Label>Or Select from List</Label>
+                <Input 
+                  placeholder="Search products..." 
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  className="mb-2"
+                />
+                <div 
+                  className="w-full max-h-40 overflow-y-auto border border-input rounded-md bg-background"
+                  onScroll={(e) => {
+                    const target = e.target as HTMLDivElement;
+                    if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10) {
+                      if (hasNextProducts && !isFetchingNextProducts) {
+                        fetchNextProducts();
+                      }
+                    }
+                  }}
                 >
-                  <option value="">Select a Product</option>
-                  {productList.map((prod: any) => (
-                    <option key={prod.id} value={prod.id}>
-                      {prod.name} ({prod.sku})
-                    </option>
-                  ))}
-                </select>
+                  {productList.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">No products found</div>
+                  ) : (
+                    productList.map((prod: any) => (
+                      <div
+                        key={prod.id}
+                        className={`p-2 text-sm cursor-pointer hover:bg-muted ${productId === prod.id ? 'bg-primary/10 font-medium' : ''}`}
+                        onClick={() => setProductId(prod.id)}
+                      >
+                        {prod.name} ({prod.sku})
+                      </div>
+                    ))
+                  )}
+                  {isFetchingNextProducts && (
+                    <div className="p-2 text-sm text-center text-muted-foreground">Loading more...</div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="warehouse-select">Warehouse</Label>

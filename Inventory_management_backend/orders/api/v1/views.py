@@ -71,7 +71,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if category:
             queryset = queryset.filter(items__product__category=category).distinct()
 
-        return queryset
+        return queryset.order_by('-created_at')
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -128,7 +128,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     f"🛒 New Order Received | #{order.order_number} | "
                     f"Customer: {request.user.username} | "
                     f"Items: {summary} | "
-                    f"Total: ${total_price:.2f}"
+                    f"Total: ₹{total_price:.2f}"
                 )
                 recipients = User.objects.filter(role__in=['STAFF', 'MANAGER'])
                 Notification.objects.bulk_create([
@@ -141,7 +141,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     message=(
                         f"✅ Order Placed! | #{order.order_number} | "
                         f"Items: {summary} | "
-                        f"Total: ${total_price:.2f} | "
+                        f"Total: ₹{total_price:.2f} | "
                         f"We'll notify you on every status update."
                     ),
                 )
@@ -239,7 +239,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 message=(
                     f"❌ Order Cancelled by Customer | #{order.order_number} | "
                     f"Customer: {request.user.username} | "
-                    f"Total: ${order.total_price:.2f} | "
+                    f"Total: ₹{order.total_price:.2f} | "
                     f"Inventory has been restored."
                 ),
             )
