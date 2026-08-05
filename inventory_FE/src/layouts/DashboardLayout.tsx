@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+
 import {
   LayoutDashboard,
   Package,
@@ -13,6 +14,18 @@ import {
   User as UserIcon,
   Store,
 } from 'lucide-react';
+
+// pop up compo..
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
@@ -146,14 +159,52 @@ export function DashboardLayout() {
             </nav>
 
             <div className="p-4 border-t border-border space-y-2">
-              <Button
+
+              {/* <Button
                 variant="ghost"
                 className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
                 onClick={handleLogout}
               >
                 <LogOut size={18} />
                 <span>Logout</span>
-              </Button>
+              </Button> */}
+
+
+              {/* pop up start */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
+                  >
+                    <LogOut size={18} />
+                    <span>Logout</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Logout</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to logout?
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <DialogFooter>
+                    <DialogFooter>
+                      <DialogClose>
+                        No
+                      </DialogClose>
+
+                      <Button onClick={handleLogout}>
+                        Yes, Logout
+                      </Button>
+                    </DialogFooter>
+                  </DialogFooter>
+                </DialogContent>
+
+                {/* Next: DialogContent */}
+              </Dialog>
+              {/* pop up end */}
             </div>
           </motion.aside>
         )}
